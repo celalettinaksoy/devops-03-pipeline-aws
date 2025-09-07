@@ -1,17 +1,16 @@
 pipeline {
-    //agent any
+    // Agent'ı etiketine göre seçiyoruz.
     agent {
-        Jenkins-Agent {
-//     environment {
-//         DOCKER_REGISTRY_USER = 'floryos'
-//         DOCKER_IMAGE_NAME = 'devops-application'
-//     }
+        label 'Jenkins-Agent'
+    }
 
+    // 'tools' bloğu 'pipeline' seviyesinde olmalı.
     tools {
         maven 'Maven3'
         jdk 'Java21'
     }
 
+    // 'stages' bloğu da 'pipeline' seviyesinde olmalı.
     stages {
 
        stage('SCM GitHub') {
@@ -22,6 +21,8 @@ pipeline {
 
         stage('Test Maven') {
             steps {
+                // 'withMaven' kullanmaya gerek yok çünkü 'tools' direktifi
+                // Maven'ı zaten PATH'e ekliyor.
                 sh "mvn test"
             }
         }
