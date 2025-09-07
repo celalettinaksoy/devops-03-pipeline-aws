@@ -1,6 +1,7 @@
 pipeline {
-    agent any
-
+    //agent any
+    agent {
+        Jenkins-Agent {
 //     environment {
 //         DOCKER_REGISTRY_USER = 'floryos'
 //         DOCKER_IMAGE_NAME = 'devops-application'
