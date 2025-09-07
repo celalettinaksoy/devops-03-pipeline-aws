@@ -21,20 +21,20 @@ pipeline {
 
         stage('Test Maven') {
             steps {
-                bat 'mvn test'
+                sh "mvn test"
             }
         }
 
         stage('Build Maven') {
             steps {
-                bat 'mvn clean install'
+                sh "mvn clean install"
             }
         }
 
 //         stage('Docker Image Build') {
 //             steps {
 //                 // --- DÜZELTME: Çift tırnak ve Windows formatında (%) değişken kullanımı ---
-//                 bat "docker build -t %DOCKER_REGISTRY_USER%/%DOCKER_IMAGE_NAME%:latest ."
+//                 sh "docker build -t %DOCKER_REGISTRY_USER%/%DOCKER_IMAGE_NAME%:latest ."
 //             }
 //         }
 //
@@ -66,7 +66,7 @@ pipeline {
 //
 //         stage('Docker Image to Clean') {
 //             steps {
-//                      bat 'docker image prune -f'
+//                      sh "docker image prune -f"
 //             }
 //         }
     }
