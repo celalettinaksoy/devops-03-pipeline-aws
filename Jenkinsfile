@@ -19,6 +19,12 @@ pipeline {
             }
         }
 
+        stage('Build Maven') {
+            steps {
+                sh "mvn clean install"
+            }
+        }
+
         stage('Test Maven') {
             steps {
                 // 'withMaven' kullanmaya gerek yok çünkü 'tools' direktifi
@@ -27,9 +33,18 @@ pipeline {
             }
         }
 
-        stage('Build Maven') {
+        stage("SonarQube Analysis") {
             steps {
-                sh "mvn clean install"
+                script {
+                    withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token') {
+                        if (isUnix()) {
+                            // Linux or MacOS
+                            sh "mvn sonar:sonar"
+                        } else {
+                            bat 'mvn sonar:sonar'  // Windows
+                        }
+                    }
+                }
             }
         }
 
