@@ -51,7 +51,7 @@ pipeline {
          stage('Docker Image Build') {
              steps {
                  // --- DÜZELTME: Çift tırnak ve Windows formatında (%) değişken kullanımı ---
-                 sh "docker build -t %DOCKER_REGISTRY_USER%/%DOCKER_IMAGE_NAME%:latest ."
+                 sh "docker build -t ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest ."
              }
          }
 
