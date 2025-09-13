@@ -4,6 +4,10 @@ pipeline {
         label 'Jenkins-Agent'
     }
 
+    environment {
+        DOCKER_REGISTRY_USER = 'floryos'
+        DOCKER_IMAGE_NAME = 'devops-application'
+
     // 'tools' bloğu 'pipeline' seviyesinde olmalı.
     tools {
         maven 'Maven3'
