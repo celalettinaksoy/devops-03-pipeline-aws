@@ -4,21 +4,22 @@ pipeline {
         label 'Jenkins-Agent'
     }
 
+    // Pipeline genelinde kullanılacak ortam değişkenleri.
     environment {
         DOCKER_REGISTRY_USER = 'floryos'
-        DOCKER_IMAGE_NAME = 'devops-application'
+        DOCKER_IMAGE_NAME    = 'devops-application'
     }
 
-    // 'tools' bloğu 'pipeline' seviyesinde olmalı.
+    // Gerekli araçları (Maven, JDK) PATH'e ekliyoruz.
     tools {
         maven 'Maven3'
         jdk 'Java21'
     }
 
-    // 'stages' bloğu da 'pipeline' seviyesinde olmalı.
+    // Pipeline aşamaları.
     stages {
 
-       stage('SCM GitHub') {
+        stage('SCM GitHub') {
             steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws']])
             }
@@ -32,8 +33,6 @@ pipeline {
 
         stage('Test Maven') {
             steps {
-                // 'withMaven' kullanmaya gerek yok çünkü 'tools' direktifi
-                // Maven'ı zaten PATH'e ekliyor.
                 sh "mvn test"
             }
         }
@@ -43,53 +42,55 @@ pipeline {
                 script {
                     withSonarQubeEnv(credentialsId: 'jenkins-sonar-token') {
                         if (isUnix()) {
-                            // Linux or MacOS
                             sh "mvn sonar:sonar"
                         } else {
-                            bat 'mvn sonar:sonar'  // Windows
+                            bat 'mvn sonar:sonar' // Windows için
                         }
                     }
                 }
             }
         }
 
-         stage('Docker Image Build') {
-             steps {
-                 // --- DÜZELTME: Çift tırnak ve Windows formatında (%) değişken kullanımı ---
-                 sh "docker build -t ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest ."
-             }
-         }
+        stage('Docker Image Build') {
+            steps {
+                sh "docker build -t ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest ."
+            }
+        }
 
         stage('Docker Image To DockerHub') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'dockerhub-creds', variable: 'DOCKER_TOKEN')]) {
+                    // ✅ GÜNCELLEME: "Username with password" tipindeki kimlik bilgisi
+                    // için "usernamePassword" kullanılıyor.
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         if (isUnix()) {
-                             // --- DÜZELTME: Çift tırnak kullanımı ---
-                             sh "docker login -u ${DOCKER_REGISTRY_USER} -p ${DOCKER_TOKEN}"
-                             sh "docker push ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest"
-                          } else {
-                             // --- DÜZELTME: Çift tırnak ve Windows formatında (%) değişken kullanımı ---
-                             bat "docker login -u %DOCKER_REGISTRY_USER% -p %DOCKER_TOKEN%"
-                             bat "docker push %DOCKER_REGISTRY_USER%/%DOCKER_IMAGE_NAME%:latest"
-                         }
+                            // Alınan yeni değişkenler ile login olunuyor.
+                            sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
+                            sh "docker push ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest"
+                        } else {
+                            // Windows için de yeni değişkenler kullanılıyor.
+                            bat "docker login -u %DOCKER_USER% -p %DOCKER_PASS%"
+                            bat "docker push %DOCKER_REGISTRY_USER%/%DOCKER_IMAGE_NAME%:latest"
+                        }
                     }
                 }
             }
         }
-//
-//         stage('Deploy Kubernetes') {
-//             steps {
-//             script {
-//                     kubernetesDeploy (configs: 'deployment-service.yaml', kubeconfigId: 'kubernetes')
-//                 }
-//             }
-//         }
-//
-//         stage('Docker Image to Clean') {
-//             steps {
-//                      sh "docker image prune -f"
-//             }
-//         }
+
+        /*
+        stage('Deploy Kubernetes') {
+            steps {
+                script {
+                    kubernetesDeploy (configs: 'deployment-service.yaml', kubeconfigId: 'kubernetes')
+                }
+            }
+        }
+
+        stage('Docker Image to Clean') {
+            steps {
+                sh "docker image prune -f"
+            }
+        }
+        */
     }
 }
