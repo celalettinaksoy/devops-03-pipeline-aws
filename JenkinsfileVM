@@ -77,11 +77,12 @@ pipeline {
             }
         }
 
-        
         stage('Deploy Kubernetes') {
             steps {
-                script {
-                    kubernetesDeploy (configs: 'deployment-service.yaml', kubeconfigId: 'kubernetes')
+                // withCredentials ile kubeconfig dosyasını güvenli bir şekilde alıyoruz
+                withCredentials([file(credentialsId: 'kubernetes', variable: 'KUBECONFIG_FILE')]) {
+                    // kubectl komutunu bu dosya ile çalıştırıyoruz
+                    sh 'kubectl apply -f deployment-service.yaml --kubeconfig ${KUBECONFIG_FILE}'
                 }
             }
         }
