@@ -17,7 +17,7 @@ pipeline {
          DOCKER_USER = "floryos"
          DOCKER_LOGIN = "dockerhub-token"
          DOCKER_IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
-         DOCKER_IMAGE_TAG = "${RELEASE}"."${BUILD_NUMBER}""
+         DOCKER_IMAGE_TAG = "${RELEASE}"."${BUILD_NUMBER}"
 
     }
 
