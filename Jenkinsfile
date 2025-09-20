@@ -68,7 +68,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo 'STAGE BAŞLIYOR: SonarQube Analysis ✅
+                        echo 'STAGE BAŞLIYOR: SonarQube Analysis ✅''
                     """
                     withSonarQubeEnv(credentialsId: 'jenkins-sonar-token') {
                         if (isUnix()) {
