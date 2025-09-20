@@ -48,6 +48,14 @@ pipeline {
             }
         }
 
+        stage("Quality Gate"){
+                   steps {
+                       script {
+                            waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonar-token'
+                        }
+                    }
+                }
+
 //         stage('Docker Image Build') {
 //             steps {
 //                 // --- DÜZELTME: Çift tırnak ve Windows formatında (%) değişken kullanımı ---
