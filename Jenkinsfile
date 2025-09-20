@@ -1,10 +1,12 @@
+// DÜZELTME: 'docker_image' değişkenini tüm aşamalarda kullanabilmek için
+// pipeline seviyesinde tanımlıyoruz.
+def docker_image
+
 pipeline {
-    // Agent'ı etiketine göre seçiyoruz.
     agent {
         label 'Jenkins-Agent'
     }
 
-    // 'tools' bloğu 'pipeline' seviyesinde olmalı.
     tools {
         maven 'Maven3'
         jdk 'Java21'
@@ -15,14 +17,10 @@ pipeline {
          RELEASE = "1.0"
          DOCKER_USER = "floryos"
          DOCKER_LOGIN = "dockerhub-token"
-         // DÜZELTME: Değişkenleri birleştirmenin en temiz ve doğru yolu
-         // Groovy'nin string interpolation özelliğini kullanmaktır.
          DOCKER_IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
          DOCKER_IMAGE_TAG = "${RELEASE}.${BUILD_NUMBER}"
     }
 
-
-    // 'stages' bloğu da 'pipeline' seviyesinde olmalı.
     stages {
 
        stage('SCM GitHub') {
@@ -48,10 +46,9 @@ pipeline {
                 script {
                     withSonarQubeEnv(credentialsId: 'jenkins-sonar-token') {
                         if (isUnix()) {
-                            // Linux or MacOS
                             sh "mvn sonar:sonar"
                         } else {
-                            bat 'mvn sonar:sonar'  // Windows
+                            bat 'mvn sonar:sonar'
                         }
                     }
                 }
@@ -66,11 +63,21 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Image to DockerHub') {
+        // YENİ AŞAMA 1: Sadece Docker imajını build eder.
+        stage('Docker Image Build') {
+            steps {
+                script {
+                    // Oluşturulan imajı pipeline seviyesindeki değişkene atıyoruz.
+                    docker_image = docker.build("${DOCKER_IMAGE_NAME}")
+                }
+            }
+        }
+
+        // YENİ AŞAMA 2: Build edilen Docker imajını push eder.
+        stage('Push Docker Image to DockerHub') {
             steps {
                 script {
                     docker.withRegistry('', DOCKER_LOGIN) {
-                        def docker_image = docker.build("${DOCKER_IMAGE_NAME}")
                         docker_image.push("${DOCKER_IMAGE_TAG}")
                         docker_image.push("latest")
                     }
