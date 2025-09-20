@@ -1,0 +1,96 @@
+pipeline {
+    // Agent'ı etiketine göre seçiyoruz.
+    agent {
+        label 'Jenkins-Agent'
+    }
+
+    // Pipeline genelinde kullanılacak ortam değişkenleri.
+    environment {
+        DOCKER_REGISTRY_USER = 'floryos'
+        DOCKER_IMAGE_NAME    = 'devops-application'
+    }
+
+    // Gerekli araçları (Maven, JDK) PATH'e ekliyoruz.
+    tools {
+        maven 'Maven3'
+        jdk 'Java21'
+    }
+
+    // Pipeline aşamaları.
+    stages {
+
+        stage('SCM GitHub') {
+            steps {
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws']])
+            }
+        }
+
+        stage('Build Maven') {
+            steps {
+                sh "mvn clean install"
+            }
+        }
+
+        stage('Test Maven') {
+            steps {
+                sh "mvn test"
+            }
+        }
+
+        stage("SonarQube Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv(credentialsId: 'jenkins-sonar-token') {
+                        if (isUnix()) {
+                            sh "mvn sonar:sonar"
+                        } else {
+                            bat 'mvn sonar:sonar' // Windows için
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Docker Image Build') {
+            steps {
+                sh "docker build -t ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest ."
+            }
+        }
+
+        stage('Docker Image Push To DockerHub') {
+            steps {
+                script {
+                    // ✅ GÜNCELLEME: "Username with password" tipindeki kimlik bilgisi
+                    // için "usernamePassword" kullanılıyor.
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        if (isUnix()) {
+                            // Alınan yeni değişkenler ile login olunuyor.
+                            sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
+                            sh "docker push ${DOCKER_REGISTRY_USER}/${DOCKER_IMAGE_NAME}:latest"
+                        } else {
+                            // Windows için de yeni değişkenler kullanılıyor.
+                            bat "docker login -u %DOCKER_USER% -p %DOCKER_PASS%"
+                            bat "docker push %DOCKER_REGISTRY_USER%/%DOCKER_IMAGE_NAME%:latest"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to K8S Cluster') {
+            steps {
+                // withCredentials ile kubeconfig dosyasını güvenli bir şekilde alıyoruz
+                withCredentials([file(credentialsId: 'kubernetes', variable: 'KUBECONFIG_FILE')]) {
+                    // kubectl komutunu bu dosya ile çalıştırıyoruz
+                    sh 'kubectl apply -f deployment-service.yaml --kubeconfig ${KUBECONFIG_FILE}'
+                }
+            }
+        }
+
+        stage('Docker Image to Clean') {
+            steps {
+                sh "docker image prune -f"
+            }
+        }
+    }
+}
