@@ -10,6 +10,18 @@ pipeline {
         jdk 'Java21'
     }
 
+    environment {
+
+         APP_NAME = "devops-03-pipeline-aws"
+         RELEASE = "1.0"
+         DOCKER_USER = "floryos"
+         DOCKER_LOGIN = "dockerhub-token"
+         DOCKER_IMAGE_NAME = ${DOCKER_USER} + "/" + ${APP_NAME}
+         DOCKER_IMAGE_TAG = ${RELEASE}.${BUILD_NUMBER}
+
+    }
+
+
     // 'stages' bloğu da 'pipeline' seviyesinde olmalı.
     stages {
 
@@ -25,8 +37,7 @@ pipeline {
             }
         }
 
-        stage('Test Maven') {
-            steps {
+        stage('Test Maven')
                 // 'withMaven' kullanmaya gerek yok çünkü 'tools' direktifi
                 // Maven'ı zaten PATH'e ekliyor.
                 sh "mvn test"
@@ -80,6 +91,21 @@ pipeline {
 //                 }
 //             }
 //         }
+
+        stage('Build & Push Docker Image to DockerHub') {
+            steps {
+                script {
+
+                    docker.withRegistry('', DOCKER_LOGIN) {
+
+                        docker_image = docker.build "${DOCKER_IMAGE_NAME}"
+                        docker_image.push("${DOCKER_IMAGE_TAG}")
+                        docker_image.push("latest")
+                    }
+                }
+            }
+        }
+
 //
 //         stage('Deploy Kubernetes') {
 //             steps {
