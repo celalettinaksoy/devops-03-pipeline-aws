@@ -24,25 +24,66 @@ pipeline {
         // 1. KODU GITHUB'DAN ÇEKME: Projenin en güncel kodunu 'main' branch'inden çeker.
         stage('SCM GitHub') {
             steps {
-                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws']])
+                script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: SCM GitHub ✅'
+                        echo '=================================================='
+                    """
+                    checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws']])
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: SCM GitHub 🎉'
+                        echo '=================================================='
+                    """
+                }
             }
         }
         // 2. MAVEN BUILD: Projeyi Maven kullanarak derler ve paketler (jar/war dosyası oluşturur).
         stage('Build Maven') {
             steps {
-                sh "mvn clean install"
+                script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Build Maven ✅'
+                        echo '=================================================='
+                    """
+                    sh "mvn clean install"
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Build Maven 🎉'
+                        echo '=================================================='
+                    """
+                }
             }
         }
         // 3. MAVEN TEST: Koddaki birim testlerini (unit tests) çalıştırır.
         stage('Test Maven') {
             steps {
-                sh "mvn test"
+                script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Test Maven ✅'
+                        echo '=================================================='
+                    """
+                    sh "mvn test"
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Test Maven 🎉'
+                        echo '=================================================='
+                    """
+                }
             }
         }
         // 4. SONARQUBE ANALİZİ: Kod kalitesini ve olası hataları analiz etmek için SonarQube'a gönderir.
         stage("SonarQube Analysis") {
             steps {
                 script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: SonarQube Analysis ✅'
+                        echo '=================================================='
+                    """
                     withSonarQubeEnv(credentialsId: 'jenkins-sonar-token') {
                         if (isUnix()) {
                             sh "mvn sonar:sonar"
@@ -50,6 +91,11 @@ pipeline {
                             bat 'mvn sonar:sonar'
                         }
                     }
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: SonarQube Analysis 🎉'
+                        echo '=================================================='
+                    """
                 }
             }
         }
@@ -57,7 +103,17 @@ pipeline {
         stage("Quality Gate") {
             steps {
                 script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Quality Gate ✅'
+                        echo '=================================================='
+                    """
                     waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonar-token'
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Quality Gate 🎉'
+                        echo '=================================================='
+                    """
                 }
             }
         }
@@ -65,8 +121,17 @@ pipeline {
         stage('Docker Image Build') {
             steps {
                 script {
-                    // Oluşturulan imajı pipeline seviyesindeki değişkene atıyoruz.
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Docker Image Build ✅'
+                        echo '=================================================='
+                    """
                     docker_image = docker.build("${DOCKER_IMAGE_NAME}")
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Docker Image Build 🎉'
+                        echo '=================================================='
+                    """
                 }
             }
         }
@@ -74,10 +139,20 @@ pipeline {
         stage('Push Docker Image to DockerHub') {
             steps {
                 script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Push Docker Image to DockerHub ✅'
+                        echo '=================================================='
+                    """
                     docker.withRegistry('', DOCKER_LOGIN) {
                         docker_image.push("${DOCKER_IMAGE_TAG}")
                         docker_image.push("latest")
                     }
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Push Docker Image to DockerHub 🎉'
+                        echo '=================================================='
+                    """
                 }
             }
         }
@@ -85,11 +160,21 @@ pipeline {
         stage("Trivy Image Scan") {
             steps {
                 script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Trivy Image Scan ✅'
+                        echo '=================================================='
+                    """
                     if (isUnix()) {
                         sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image floryos/devops-03-pipeline-aws:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
                     } else {
                         bat ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image floryos/devops-03-pipeline-aws:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
                     }
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Trivy Image Scan 🎉'
+                        echo '=================================================='
+                    """
                 }
             }
         }
@@ -97,6 +182,11 @@ pipeline {
         stage('Cleanup Docker Images') {
             steps {
                 script {
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: Cleanup Docker Images ✅'
+                        echo '=================================================='
+                    """
                     if (isUnix()) {
                         sh """
                             # Bu repo için tüm image’leri al, tarihe göre sırala, son 3 hariç sil
@@ -118,6 +208,11 @@ pipeline {
                             docker image prune -f
                         """
                     }
+                    sh """
+                        echo '=================================================='
+                        echo '     STAGE TAMAMLANDI: Cleanup Docker Images 🎉'
+                        echo '=================================================='
+                    """
                 }
             }
         }
