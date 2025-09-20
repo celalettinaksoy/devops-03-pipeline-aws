@@ -15,9 +15,9 @@ pipeline {
          RELEASE = "1.0"
          DOCKER_USER = "floryos"
          DOCKER_LOGIN = "dockerhub-token"
-         // DÜZELTME: Environment bloğunda değişkenler bu şekilde birleştirilmelidir.
-         // Çift tırnak ve ${} kullanımına gerek yoktur.
-         DOCKER_IMAGE_NAME = DOCKER_USER + '/' + APP_NAME
+         // DÜZELTME: Değişkenleri birleştirmenin en temiz ve doğru yolu
+         // Groovy'nin string interpolation özelliğini kullanmaktır.
+         DOCKER_IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
          DOCKER_IMAGE_TAG = "${RELEASE}.${BUILD_NUMBER}"
     }
 
@@ -37,8 +37,6 @@ pipeline {
             }
         }
 
-        // DÜZELTME: 'stage' bloğu mutlaka bir 'steps' bloğu içermelidir.
-        // 'sh "mvn test"' komutu 'steps' bloğunun içine alındı.
         stage('Test Maven') {
             steps {
                 sh "mvn test"
@@ -80,7 +78,6 @@ pipeline {
             }
         }
 
-        // --- Diğer aşamalarınız yorum satırı olarak bırakıldı ---
         /*
         stage('Deploy Kubernetes') {
             steps {
