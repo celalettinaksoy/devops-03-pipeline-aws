@@ -26,15 +26,11 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: SCM GitHub ✅'
-                        echo '=================================================='
                     """
                     checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws']])
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: SCM GitHub 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -44,15 +40,11 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: Build Maven ✅'
-                        echo '=================================================='
                     """
                     sh "mvn clean install"
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Build Maven 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -62,15 +54,11 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: Test Maven ✅'
-                        echo '=================================================='
                     """
                     sh "mvn test"
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Test Maven 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -80,9 +68,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
-                        echo '     STAGE BAŞLIYOR: SonarQube Analysis ✅'
-                        echo '=================================================='
+                        echo '     STAGE BAŞLIYOR: SonarQube Analysis ✅
                     """
                     withSonarQubeEnv(credentialsId: 'jenkins-sonar-token') {
                         if (isUnix()) {
@@ -92,9 +78,7 @@ pipeline {
                         }
                     }
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: SonarQube Analysis 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -104,15 +88,11 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: Quality Gate ✅'
-                        echo '=================================================='
                     """
                     waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonar-token'
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Quality Gate 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -122,15 +102,11 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: Docker Image Build ✅'
-                        echo '=================================================='
                     """
                     docker_image = docker.build("${DOCKER_IMAGE_NAME}")
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Docker Image Build 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -140,18 +116,14 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: Push Docker Image to DockerHub ✅'
-                        echo '=================================================='
                     """
                     docker.withRegistry('', DOCKER_LOGIN) {
                         docker_image.push("${DOCKER_IMAGE_TAG}")
                         docker_image.push("latest")
                     }
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Push Docker Image to DockerHub 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -161,9 +133,8 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
+
                         echo '     STAGE BAŞLIYOR: Trivy Image Scan ✅'
-                        echo '=================================================='
                     """
                     if (isUnix()) {
                         sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image floryos/devops-03-pipeline-aws:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
@@ -171,9 +142,7 @@ pipeline {
                         bat ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image floryos/devops-03-pipeline-aws:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
                     }
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Trivy Image Scan 🎉'
-                        echo '=================================================='
                     """
                 }
             }
@@ -183,9 +152,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '=================================================='
                         echo '     STAGE BAŞLIYOR: Cleanup Docker Images ✅'
-                        echo '=================================================='
                     """
                     if (isUnix()) {
                         sh """
@@ -209,9 +176,7 @@ pipeline {
                         """
                     }
                     sh """
-                        echo '=================================================='
                         echo '     STAGE TAMAMLANDI: Cleanup Docker Images 🎉'
-                        echo '=================================================='
                     """
                 }
             }
