@@ -1,5 +1,5 @@
 # Uygalanin calismasi için JDK lazim
-FROM eclipse-temurin:17-jre-slim
+FROM openjdk:17-jre-slim-bullseye
 
 # projenin jar dosyasi nerede?
 ARG JAR_FILE=target/*.jar
