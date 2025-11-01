@@ -13,7 +13,7 @@ pipeline {
     // Gerekli araçları (Maven, JDK) PATH'e ekliyoruz.
     tools {
         maven 'Maven3'
-        jdk 'Java21'
+        jdk 'Java17'
     }
 
     // Pipeline aşamaları.
