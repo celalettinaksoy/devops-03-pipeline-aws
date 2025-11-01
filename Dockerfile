@@ -1,5 +1,5 @@
 # Uygalanin calismasi için JDK lazim
-FROM openjdk:21
+FROM openjdk:17-jre-slim
 
 # projenin jar dosyasi nerede?
 ARG JAR_FILE=target/*.jar
