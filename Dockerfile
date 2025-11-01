@@ -1,5 +1,5 @@
 # Uygalanin calismasi için JDK lazim
-FROM oubuntu/jre:17_edge
+FROM ubuntu/jre:17_edge
 
 # projenin jar dosyasi nerede?
 ARG JAR_FILE=target/*.jar
